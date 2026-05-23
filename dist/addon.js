@@ -377,10 +377,24 @@ function MemoPage({ ctx }) {
 
   return h(
     "div",
-    { className: "grid h-[calc(100vh-1rem)] min-h-[640px] overflow-hidden bg-background text-foreground md:grid-cols-[300px_minmax(0,1fr)]" },
+    {
+      className: "grid overflow-hidden bg-background text-foreground",
+      style: {
+        gridTemplateColumns: "300px minmax(0, 1fr)",
+        height: "calc(100vh - 1rem)",
+        minHeight: "640px",
+        width: "100%"
+      }
+    },
     h(
       "aside",
-      { className: "flex min-h-0 flex-col border-b bg-muted/20 md:border-b-0 md:border-r" },
+      {
+        className: "flex flex-col border-r bg-muted/20",
+        style: {
+          minHeight: 0,
+          width: "300px"
+        }
+      },
       h(
         "div",
         { className: "shrink-0 border-b bg-background/80 px-3 py-3" },
@@ -449,12 +463,24 @@ function MemoPage({ ctx }) {
     ),
     h(
       "main",
-      { className: "relative min-h-0 overflow-hidden bg-background" },
+      {
+        className: "relative overflow-hidden bg-background",
+        style: {
+          height: "100%",
+          minHeight: 0
+        }
+      },
       !selectedMemo
         ? h(EmptyState, { onCreate: createNewMemo })
         : h(
             "div",
-            { className: "relative flex h-full min-h-0 flex-col" },
+            {
+              className: "relative flex flex-col",
+              style: {
+                height: "100%",
+                minHeight: 0
+              }
+            },
             h(
               "div",
               { className: "absolute right-4 top-4 z-10 flex items-center gap-2 md:right-6" },
@@ -483,22 +509,52 @@ function MemoPage({ ctx }) {
             ),
             h(
               "div",
-              { className: "mx-auto flex h-full w-full max-w-3xl flex-col px-6 pb-24 pt-20 md:px-10 md:pt-24" },
+              {
+                className: "flex w-full flex-col",
+                style: {
+                  boxSizing: "border-box",
+                  height: "100%",
+                  minHeight: 0,
+                  padding: "88px 72px 92px 72px"
+                }
+              },
               h("input", {
                 value: selectedMemo.title,
                 onChange: (event) => updateSelected({ title: event.target.value }),
                 placeholder: "Untitled memo",
-                className: "w-full bg-transparent text-3xl font-semibold leading-tight tracking-normal outline-none placeholder:text-muted-foreground md:text-4xl"
+                className: "w-full bg-transparent text-3xl font-semibold leading-tight tracking-normal outline-none placeholder:text-muted-foreground md:text-4xl",
+                style: {
+                  maxWidth: "980px",
+                  margin: "0 auto"
+                }
               }),
               h("textarea", {
                 value: selectedMemo.content,
                 onChange: (event) => updateSelected({ content: event.target.value }),
                 placeholder: "Write notes, thesis updates, review reminders, or account tasks...",
-                className: "mt-5 min-h-0 flex-1 resize-none bg-transparent text-base leading-8 outline-none placeholder:text-muted-foreground md:text-lg"
+                className: "mt-5 resize-none bg-transparent text-base leading-8 outline-none placeholder:text-muted-foreground md:text-lg",
+                style: {
+                  boxSizing: "border-box",
+                  flex: "1 1 auto",
+                  height: "100%",
+                  minHeight: "520px",
+                  maxWidth: "980px",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                  width: "100%"
+                }
               }),
               h(
                 "div",
-                { className: "mt-4 flex items-center gap-3 text-xs text-muted-foreground" },
+                {
+                  className: "mt-4 flex items-center gap-3 text-xs text-muted-foreground",
+                  style: {
+                    maxWidth: "980px",
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                    width: "100%"
+                  }
+                },
                 h("span", null, `${selectedWords} words`),
                 h("span", null, `Updated ${formatDate(selectedMemo.updatedAt)}`)
               )
