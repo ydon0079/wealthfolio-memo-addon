@@ -111,6 +111,43 @@ function MemoIcon({ className = "h-5 w-5" } = {}) {
   );
 }
 
+function MenuIcon({ className = "h-4 w-4" } = {}) {
+  return h(
+    "svg",
+    {
+      className,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true"
+    },
+    h("path", { d: "M4 6h16" }),
+    h("path", { d: "M4 12h16" }),
+    h("path", { d: "M4 18h16" })
+  );
+}
+
+function XIcon({ className = "h-4 w-4" } = {}) {
+  return h(
+    "svg",
+    {
+      className,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true"
+    },
+    h("path", { d: "M18 6 6 18" }),
+    h("path", { d: "m6 6 12 12" })
+  );
+}
+
 function PlusIcon({ className = "h-4 w-4" } = {}) {
   return h(
     "svg",
@@ -301,6 +338,8 @@ function MemoPage({ ctx }) {
   const [loaded, setLoaded] = React.useState(false);
   const [saveState, setSaveState] = React.useState("idle");
   const [copyState, setCopyState] = React.useState("idle");
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => window.innerWidth >= 768);
 
   React.useEffect(() => {
     let active = true;
@@ -328,6 +367,17 @@ function MemoPage({ ctx }) {
     return () => {
       active = false;
     };
+  }, []);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const nextIsMobile = window.innerWidth < 768;
+      setIsMobile(nextIsMobile);
+      setSidebarOpen((current) => (nextIsMobile ? current : true));
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   React.useEffect(() => {
@@ -362,7 +412,8 @@ function MemoPage({ ctx }) {
     const memo = createMemo();
     setMemos((current) => [memo, ...current]);
     setSelectedId(memo.id);
-  }, []);
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   const updateSelected = React.useCallback(
     (patch) => {
@@ -410,202 +461,270 @@ function MemoPage({ ctx }) {
   }, [ctx, selectedMemo]);
 
   const selectedWords = selectedMemo ? countWords(selectedMemo.content) : 0;
+  const mobileViewportHeight = window.CSS?.supports?.("height", "100dvh") ? "100dvh" : "100vh";
 
-  return h(
-    "div",
+  const rootStyle = {
+    display: isMobile ? "block" : "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "300px minmax(0, 1fr)",
+    height: isMobile ? mobileViewportHeight : "calc(100vh - 1rem)",
+    minHeight: isMobile ? "0" : "640px",
+    position: "relative",
+    width: "100%"
+  };
+
+  const closeOverlay =
+    isMobile && sidebarOpen
+      ? h("button", {
+          type: "button",
+          onClick: () => setSidebarOpen(false),
+          className: "absolute inset-0 bg-black/30",
+          style: {
+            border: 0,
+            cursor: "default",
+            height: "100%",
+            left: 0,
+            padding: 0,
+            position: "absolute",
+            top: 0,
+            width: "100%",
+            zIndex: 20
+          },
+          title: "Close memos",
+          "aria-label": "Close memos"
+        })
+      : null;
+
+  const sidebar = h(
+    "aside",
     {
-      className: "grid overflow-hidden bg-background text-foreground",
+      className: "flex flex-col border-r bg-muted/20",
       style: {
-        gridTemplateColumns: "300px minmax(0, 1fr)",
-        height: "calc(100vh - 1rem)",
-        minHeight: "640px",
-        width: "100%"
+        background: "hsl(var(--background))",
+        boxShadow: isMobile && sidebarOpen ? "0 24px 80px rgba(0, 0, 0, 0.28)" : "none",
+        height: "100%",
+        minHeight: 0,
+        position: isMobile ? "absolute" : "relative",
+        transform: isMobile && !sidebarOpen ? "translateX(-104%)" : "translateX(0)",
+        transition: "transform 180ms ease",
+        width: isMobile ? "min(86vw, 320px)" : "300px",
+        zIndex: 30
       }
     },
     h(
-      "aside",
-      {
-        className: "flex flex-col border-r bg-muted/20",
-        style: {
-          minHeight: 0,
-          width: "300px"
-        }
-      },
+      "div",
+      { className: "shrink-0 border-b bg-background/80 px-3 py-3" },
       h(
         "div",
-        { className: "shrink-0 border-b bg-background/80 px-3 py-3" },
+        { className: "mb-3 flex items-center justify-between gap-2" },
         h(
           "div",
-          { className: "mb-3 flex items-center justify-between gap-2" },
-          h(
-            "div",
-            { className: "flex min-w-0 items-center gap-2" },
-            h("div", { className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground" }, h(MemoIcon, { className: "h-4 w-4" })),
-            h("div", { className: "truncate text-sm font-semibold" }, "Memos")
-          ),
-          h(
-            "div",
-            { className: "flex items-center gap-1" },
-            h(
-              "button",
-              {
-                type: "button",
-                onClick: createNewMemo,
-                className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                title: "New memo",
-                "aria-label": "New memo"
-              },
-              h(PlusIcon)
-            )
-          )
+          { className: "flex min-w-0 items-center gap-2" },
+          h("div", { className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground" }, h(MemoIcon, { className: "h-4 w-4" })),
+          h("div", { className: "truncate text-sm font-semibold" }, "Memos")
         ),
         h(
           "div",
-          { className: "relative" },
-          h(SearchIcon, { className: "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" }),
-          h("input", {
-            value: query,
-            onChange: (event) => setQuery(event.target.value),
-            placeholder: "Search",
-            className: "h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          })
+          { className: "flex items-center gap-1" },
+          h(
+            "button",
+            {
+              type: "button",
+              onClick: createNewMemo,
+              className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              title: "New memo",
+              "aria-label": "New memo"
+            },
+            h(PlusIcon)
+          ),
+          isMobile
+            ? h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setSidebarOpen(false),
+                  className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                  title: "Close memos",
+                  "aria-label": "Close memos"
+                },
+                h(XIcon)
+              )
+            : null
         )
       ),
       h(
         "div",
-        { className: "min-h-0 flex-1 overflow-y-auto px-2 py-2" },
-        !loaded
-          ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, "Loading memos...")
-          : filteredMemos.length === 0
-            ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, query ? "No matching memos." : "No memos yet.")
-            : filteredMemos.map((memo) =>
-                h(
-                  "button",
-                  {
-                    key: memo.id,
-                    type: "button",
-                    onClick: () => setSelectedId(memo.id),
-                    className: cx(
-                      "mb-1 w-full rounded-md px-3 py-2.5 text-left transition-colors",
-                      memo.id === selectedId ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                    )
-                  },
-                  h("div", { className: "truncate text-sm font-medium" }, displayTitle(memo)),
-                  h("div", { className: "mt-1 line-clamp-2 text-xs leading-5" }, getPreview(memo)),
-                  h("div", { className: "mt-2 text-xs text-muted-foreground" }, formatDate(memo.updatedAt))
-                )
-              )
+        { className: "relative" },
+        h(SearchIcon, { className: "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" }),
+        h("input", {
+          value: query,
+          onChange: (event) => setQuery(event.target.value),
+          placeholder: "Search",
+          className: "h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        })
       )
     ),
     h(
-      "main",
-      {
-        className: "relative overflow-hidden bg-background",
-        style: {
-          height: "100%",
-          minHeight: 0
-        }
-      },
-      !selectedMemo
-        ? h(EmptyState, { onCreate: createNewMemo })
-        : h(
-            "div",
-            {
-              className: "relative flex flex-col",
-              style: {
-                height: "100%",
-                minHeight: 0
-              }
-            },
-            h(
-              "div",
-              { className: "absolute right-4 top-4 z-10 flex items-center gap-2 md:right-6" },
-              h(StatusPill, { saveState, loaded }),
+      "div",
+      { className: "min-h-0 flex-1 overflow-y-auto px-2 py-2" },
+      !loaded
+        ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, "Loading memos...")
+        : filteredMemos.length === 0
+          ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, query ? "No matching memos." : "No memos yet.")
+          : filteredMemos.map((memo) =>
               h(
                 "button",
                 {
+                  key: memo.id,
                   type: "button",
-                  onClick: deleteSelected,
-                  className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",
-                  title: "Delete memo",
-                  "aria-label": "Delete memo"
-                },
-                h(TrashIcon)
-              ),
-              h(
-                "button",
-                {
-                  type: "button",
-                  onClick: copySelected,
+                  onClick: () => {
+                    setSelectedId(memo.id);
+                    if (isMobile) setSidebarOpen(false);
+                  },
                   className: cx(
-                    "inline-flex h-8 items-center justify-center rounded-md px-2 text-xs transition-colors hover:bg-muted hover:text-foreground",
-                    copyState === "copied"
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                      : copyState === "error"
-                        ? "bg-destructive/10 text-destructive"
-                        : "text-muted-foreground"
-                  ),
-                  title: "Copy memo",
-                  "aria-label": "Copy memo"
+                    "mb-1 w-full rounded-md px-3 py-2.5 text-left transition-colors",
+                    memo.id === selectedId ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                  )
                 },
-                copyState === "copied" ? "Copied" : copyState === "error" ? "Failed" : h(CopyIcon)
-              )
-            ),
-            h(
-              "div",
-              {
-                className: "flex w-full flex-col",
-                style: {
-                  boxSizing: "border-box",
-                  height: "100%",
-                  minHeight: 0,
-                  padding: "88px 72px 92px 72px"
-                }
-              },
-              h("input", {
-                value: selectedMemo.title,
-                onChange: (event) => updateSelected({ title: event.target.value }),
-                placeholder: "Untitled memo",
-                className: "w-full bg-transparent text-3xl font-semibold leading-tight tracking-normal outline-none placeholder:text-muted-foreground md:text-4xl",
-                style: {
-                  maxWidth: "980px",
-                  margin: "0 auto"
-                }
-              }),
-              h("textarea", {
-                value: selectedMemo.content,
-                onChange: (event) => updateSelected({ content: event.target.value }),
-                placeholder: "Write notes, thesis updates, review reminders, or account tasks...",
-                className: "mt-5 resize-none bg-transparent text-base leading-8 outline-none placeholder:text-muted-foreground md:text-lg",
-                style: {
-                  boxSizing: "border-box",
-                  flex: "1 1 auto",
-                  height: "100%",
-                  minHeight: "520px",
-                  maxWidth: "980px",
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                  width: "100%"
-                }
-              }),
-              h(
-                "div",
-                {
-                  className: "mt-4 flex items-center gap-3 text-xs text-muted-foreground",
-                  style: {
-                    maxWidth: "980px",
-                    marginLeft: "auto",
-                    marginRight: "auto",
-                    width: "100%"
-                  }
-                },
-                h("span", null, `${selectedWords} words`),
-                h("span", null, `Updated ${formatDate(selectedMemo.updatedAt)}`)
+                h("div", { className: "truncate text-sm font-medium" }, displayTitle(memo)),
+                h("div", { className: "mt-1 line-clamp-2 text-xs leading-5" }, getPreview(memo)),
+                h("div", { className: "mt-2 text-xs text-muted-foreground" }, formatDate(memo.updatedAt))
               )
             )
-          )
-      )
+    )
   );
+
+  const editor = selectedMemo
+    ? h(
+        "div",
+        {
+          className: "relative flex flex-col",
+          style: {
+            height: "100%",
+            minHeight: 0
+          }
+        },
+        isMobile
+          ? h(
+              "button",
+              {
+                type: "button",
+                onClick: () => setSidebarOpen(true),
+                className: "absolute left-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground",
+                title: "Open memos",
+                "aria-label": "Open memos"
+              },
+              h(MenuIcon)
+            )
+          : null,
+        h(
+          "div",
+          {
+            className: "absolute z-10 flex items-center gap-2",
+            style: {
+              right: isMobile ? "12px" : "24px",
+              top: isMobile ? "12px" : "16px"
+            }
+          },
+          h(StatusPill, { saveState, loaded }),
+          h(
+            "button",
+            {
+              type: "button",
+              onClick: deleteSelected,
+              className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",
+              title: "Delete memo",
+              "aria-label": "Delete memo"
+            },
+            h(TrashIcon)
+          ),
+          h(
+            "button",
+            {
+              type: "button",
+              onClick: copySelected,
+              className: cx(
+                "inline-flex h-8 items-center justify-center rounded-md px-2 text-xs transition-colors hover:bg-muted hover:text-foreground",
+                copyState === "copied"
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : copyState === "error"
+                    ? "bg-destructive/10 text-destructive"
+                    : "text-muted-foreground"
+              ),
+              title: "Copy memo",
+              "aria-label": "Copy memo"
+            },
+            copyState === "copied" ? "Copied" : copyState === "error" ? "Failed" : h(CopyIcon)
+          )
+        ),
+        h(
+          "div",
+          {
+            className: "flex w-full flex-col",
+            style: {
+              boxSizing: "border-box",
+              height: "100%",
+              minHeight: 0,
+              padding: isMobile ? "70px 18px 56px 18px" : "88px 72px 92px 72px"
+            }
+          },
+          h("input", {
+            value: selectedMemo.title,
+            onChange: (event) => updateSelected({ title: event.target.value }),
+            placeholder: "Untitled memo",
+            className: "w-full bg-transparent text-3xl font-semibold leading-tight tracking-normal outline-none placeholder:text-muted-foreground md:text-4xl",
+            style: {
+              fontSize: isMobile ? "28px" : undefined,
+              margin: "0 auto",
+              maxWidth: "980px"
+            }
+          }),
+          h("textarea", {
+            value: selectedMemo.content,
+            onChange: (event) => updateSelected({ content: event.target.value }),
+            placeholder: "Write notes, thesis updates, review reminders, or account tasks...",
+            className: "mt-5 resize-none bg-transparent text-base leading-8 outline-none placeholder:text-muted-foreground md:text-lg",
+            style: {
+              boxSizing: "border-box",
+              flex: "1 1 auto",
+              height: "100%",
+              marginLeft: "auto",
+              marginRight: "auto",
+              maxWidth: "980px",
+              minHeight: isMobile ? `calc(${mobileViewportHeight} - 220px)` : "520px",
+              width: "100%"
+            }
+          }),
+          h(
+            "div",
+            {
+              className: "mt-4 flex items-center gap-3 text-xs text-muted-foreground",
+              style: {
+                marginLeft: "auto",
+                marginRight: "auto",
+                maxWidth: "980px",
+                width: "100%"
+              }
+            },
+            h("span", null, `${selectedWords} words`),
+            h("span", null, `Updated ${formatDate(selectedMemo.updatedAt)}`)
+          )
+        )
+      )
+    : h(EmptyState, { onCreate: createNewMemo });
+
+  const main = h(
+    "main",
+    {
+      className: "relative overflow-hidden bg-background",
+      style: {
+        height: "100%",
+        minHeight: 0
+      }
+    },
+    editor
+  );
+
+  return h("div", { className: "overflow-hidden bg-background text-foreground", style: rootStyle }, closeOverlay, sidebar, main);
 }
 
 export default function enable(ctx) {
