@@ -168,7 +168,7 @@ function SearchIcon({ className = "h-4 w-4" } = {}) {
   );
 }
 
-function DotsIcon({ className = "h-4 w-4" } = {}) {
+function CopyIcon({ className = "h-4 w-4" } = {}) {
   return h(
     "svg",
     {
@@ -181,9 +181,8 @@ function DotsIcon({ className = "h-4 w-4" } = {}) {
       strokeLinejoin: "round",
       "aria-hidden": "true"
     },
-    h("circle", { cx: "12", cy: "12", r: "1" }),
-    h("circle", { cx: "19", cy: "12", r: "1" }),
-    h("circle", { cx: "5", cy: "12", r: "1" })
+    h("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }),
+    h("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" })
   );
 }
 
@@ -227,6 +226,27 @@ function countWords(value) {
   const trimmed = value.trim();
   if (!trimmed) return 0;
   return trimmed.split(/\s+/).filter(Boolean).length;
+}
+
+async function copyTextToClipboard(value) {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textarea);
+  }
 }
 
 function StatusPill({ saveState, loaded }) {
@@ -280,6 +300,7 @@ function MemoPage({ ctx }) {
   const [query, setQuery] = React.useState("");
   const [loaded, setLoaded] = React.useState(false);
   const [saveState, setSaveState] = React.useState("idle");
+  const [copyState, setCopyState] = React.useState("idle");
 
   React.useEffect(() => {
     let active = true;
@@ -372,6 +393,21 @@ function MemoPage({ ctx }) {
       return next;
     });
   }, [selectedMemo]);
+
+  const copySelected = React.useCallback(() => {
+    if (!selectedMemo) return;
+    const text = [displayTitle(selectedMemo), selectedMemo.content || ""].filter(Boolean).join("\n\n");
+    copyTextToClipboard(text)
+      .then(() => {
+        setCopyState("copied");
+        window.setTimeout(() => setCopyState("idle"), 1200);
+      })
+      .catch((error) => {
+        ctx?.api?.logger?.error?.(`Memo addon: failed to copy memo: ${String(error)}`);
+        setCopyState("error");
+        window.setTimeout(() => setCopyState("idle"), 1600);
+      });
+  }, [ctx, selectedMemo]);
 
   const selectedWords = selectedMemo ? countWords(selectedMemo.content) : 0;
 
@@ -500,11 +536,19 @@ function MemoPage({ ctx }) {
                 "button",
                 {
                   type: "button",
-                  className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                  title: "More",
-                  "aria-label": "More"
+                  onClick: copySelected,
+                  className: cx(
+                    "inline-flex h-8 items-center justify-center rounded-md px-2 text-xs transition-colors hover:bg-muted hover:text-foreground",
+                    copyState === "copied"
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                      : copyState === "error"
+                        ? "bg-destructive/10 text-destructive"
+                        : "text-muted-foreground"
+                  ),
+                  title: "Copy memo",
+                  "aria-label": "Copy memo"
                 },
-                h(DotsIcon)
+                copyState === "copied" ? "Copied" : copyState === "error" ? "Failed" : h(CopyIcon)
               )
             ),
             h(
@@ -558,16 +602,6 @@ function MemoPage({ ctx }) {
                 h("span", null, `${selectedWords} words`),
                 h("span", null, `Updated ${formatDate(selectedMemo.updatedAt)}`)
               )
-            ),
-            h(
-              "div",
-              { className: "absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-muted/90 px-2 py-1.5 text-sm text-muted-foreground shadow-lg backdrop-blur" },
-              h("button", { type: "button", className: "rounded px-2 py-1 font-medium hover:bg-background hover:text-foreground", title: "Heading" }, "H"),
-              h("button", { type: "button", className: "rounded px-2 py-1 font-semibold hover:bg-background hover:text-foreground", title: "Bold" }, "B"),
-              h("button", { type: "button", className: "rounded px-2 py-1 italic hover:bg-background hover:text-foreground", title: "Italic" }, "I"),
-              h("span", { className: "mx-1 h-4 w-px bg-border" }),
-              h("button", { type: "button", className: "rounded px-2 py-1 hover:bg-background hover:text-foreground", title: "Link" }, "Link"),
-              h("button", { type: "button", className: "rounded px-2 py-1 hover:bg-background hover:text-foreground", title: "More" }, h(DotsIcon))
             )
           )
       )

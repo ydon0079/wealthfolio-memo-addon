@@ -1,7 +1,7 @@
 {
   "id": "wealthfolio-memo-addon",
   "name": "Memo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A Wealthfolio-style memo workspace for private investment notes.",
   "author": "local",
   "main": "dist/addon.js",

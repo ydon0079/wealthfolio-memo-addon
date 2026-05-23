@@ -14,7 +14,7 @@ A Wealthfolio-style memo workspace for private investment notes.
 Package the add-on as a ZIP with `manifest.json`, `dist/addon.js`, and `README.md` at the ZIP root:
 
 ```bash
-zip -r wealthfolio-memo-addon-0.3.1.zip manifest.json dist README.md
+zip -r wealthfolio-memo-addon-0.3.2.zip manifest.json dist README.md
 ```
 
 Install the ZIP from Wealthfolio's Add-ons settings page, then enable `Memo`.
