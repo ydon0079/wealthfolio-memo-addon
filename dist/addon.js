@@ -168,6 +168,25 @@ function SearchIcon({ className = "h-4 w-4" } = {}) {
   );
 }
 
+function DotsIcon({ className = "h-4 w-4" } = {}) {
+  return h(
+    "svg",
+    {
+      className,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true"
+    },
+    h("circle", { cx: "12", cy: "12", r: "1" }),
+    h("circle", { cx: "19", cy: "12", r: "1" }),
+    h("circle", { cx: "5", cy: "12", r: "1" })
+  );
+}
+
 function CheckIcon({ className = "h-4 w-4" } = {}) {
   return h(
     "svg",
@@ -208,11 +227,6 @@ function countWords(value) {
   const trimmed = value.trim();
   if (!trimmed) return 0;
   return trimmed.split(/\s+/).filter(Boolean).length;
-}
-
-function countLines(value) {
-  if (!value) return 0;
-  return value.split("\n").length;
 }
 
 function StatusPill({ saveState, loaded }) {
@@ -359,171 +373,148 @@ function MemoPage({ ctx }) {
     });
   }, [selectedMemo]);
 
-  const totalWords = React.useMemo(
-    () => memos.reduce((total, memo) => total + countWords(`${memo.title} ${memo.content}`), 0),
-    [memos]
-  );
   const selectedWords = selectedMemo ? countWords(selectedMemo.content) : 0;
-  const selectedLines = selectedMemo ? countLines(selectedMemo.content) : 0;
 
   return h(
     "div",
-    { className: "flex h-[calc(100vh-1rem)] min-h-[640px] flex-col overflow-hidden bg-background text-foreground" },
+    { className: "grid h-[calc(100vh-1rem)] min-h-[640px] overflow-hidden bg-background text-foreground md:grid-cols-[300px_minmax(0,1fr)]" },
     h(
-      "header",
-      { className: "flex h-[72px] shrink-0 items-center justify-between border-b px-4 md:px-6" },
+      "aside",
+      { className: "flex min-h-0 flex-col border-b bg-muted/20 md:border-b-0 md:border-r" },
       h(
         "div",
-        { className: "flex min-w-0 items-center gap-3" },
-        h("div", { className: "bg-muted hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg border md:flex" }, h(MemoIcon, { className: "text-muted-foreground h-5 w-5" })),
+        { className: "shrink-0 border-b bg-background/80 px-3 py-3" },
         h(
           "div",
-          { className: "min-w-0" },
-          h("h1", { className: "truncate text-xl font-semibold tracking-tight" }, "Memo"),
-          h("p", { className: "text-muted-foreground mt-0.5 truncate text-sm" }, "Private notes for portfolio work")
-        )
-      ),
-      h(
-        "div",
-        { className: "flex items-center gap-3" },
-        h(StatusPill, { saveState, loaded }),
-        h(
-          "button",
-          {
-            type: "button",
-            onClick: createNewMemo,
-            className: "bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium shadow-sm transition-colors"
-          },
-          h(PlusIcon),
-          "New"
-        )
-      )
-    ),
-    h(
-      "div",
-      { className: "grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[360px_minmax(0,1fr)]" },
-      h(
-        "aside",
-        { className: "bg-muted/20 flex min-h-0 flex-col border-b md:border-b-0 md:border-r" },
-        h(
-          "div",
-          { className: "space-y-3 border-b bg-background/70 p-3" },
+          { className: "mb-3 flex items-center justify-between gap-2" },
           h(
             "div",
-            { className: "flex items-center justify-between gap-2" },
-            h("div", { className: "text-sm font-medium" }, "Memos"),
-            h("div", { className: "text-muted-foreground text-xs" }, `${memos.length} notes`)
+            { className: "flex min-w-0 items-center gap-2" },
+            h("div", { className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground" }, h(MemoIcon, { className: "h-4 w-4" })),
+            h("div", { className: "truncate text-sm font-semibold" }, "Memos")
           ),
           h(
             "div",
-            { className: "relative" },
-            h(SearchIcon, { className: "text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" }),
-            h("input", {
-              value: query,
-              onChange: (event) => setQuery(event.target.value),
-              placeholder: "Search memos",
-              className: "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
-            })
-          ),
-          h(
-            "div",
-            { className: "grid grid-cols-2 gap-2" },
-            h("div", { className: "rounded-md border bg-background px-2.5 py-2" }, h("div", { className: "text-muted-foreground text-[11px]" }, "Words"), h("div", { className: "text-sm font-semibold" }, String(totalWords))),
-            h("div", { className: "rounded-md border bg-background px-2.5 py-2" }, h("div", { className: "text-muted-foreground text-[11px]" }, "Updated"), h("div", { className: "truncate text-sm font-semibold" }, memos[0] ? formatDate(memos[0].updatedAt) : "None"))
+            { className: "flex items-center gap-1" },
+            h(
+              "button",
+              {
+                type: "button",
+                onClick: createNewMemo,
+                className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                title: "New memo",
+                "aria-label": "New memo"
+              },
+              h(PlusIcon)
+            )
           )
         ),
         h(
           "div",
-          { className: "min-h-0 flex-1 overflow-y-auto p-2" },
-          !loaded
-            ? h("div", { className: "text-muted-foreground px-3 py-4 text-sm" }, "Loading memos...")
-            : filteredMemos.length === 0
-              ? h("div", { className: "text-muted-foreground px-3 py-4 text-sm" }, query ? "No matching memos." : "No memos yet.")
-              : filteredMemos.map((memo) =>
-                  h(
-                    "button",
-                    {
-                      key: memo.id,
-                      type: "button",
-                      onClick: () => setSelectedId(memo.id),
-                      className: cx(
-                        "group mb-1 w-full rounded-md border px-3 py-2.5 text-left transition-colors",
-                        memo.id === selectedId
-                          ? "border-border bg-background text-foreground shadow-sm"
-                          : "border-transparent hover:border-border hover:bg-background/80"
-                      )
-                    },
-                    h("div", { className: "flex items-center justify-between gap-3" }, h("div", { className: "truncate text-sm font-medium" }, displayTitle(memo)), h("div", { className: "text-muted-foreground shrink-0 text-[11px]" }, formatDate(memo.updatedAt))),
-                    h("div", { className: "text-muted-foreground mt-1 line-clamp-2 text-xs leading-5" }, getPreview(memo)),
-                    h("div", { className: "text-muted-foreground mt-2 text-[11px]" }, `${countWords(memo.content)} words`)
-                  )
-                )
+          { className: "relative" },
+          h(SearchIcon, { className: "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" }),
+          h("input", {
+            value: query,
+            onChange: (event) => setQuery(event.target.value),
+            placeholder: "Search",
+            className: "h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          })
         )
       ),
       h(
-        "main",
-        { className: "min-h-0 overflow-hidden bg-background" },
-        !selectedMemo
-          ? h(EmptyState, { onCreate: createNewMemo })
-          : h(
-              "div",
-              { className: "flex h-full min-h-0 flex-col" },
-              h(
-                "div",
-                { className: "flex shrink-0 items-start justify-between gap-3 border-b bg-background p-4 md:p-6" },
-                h(
-                  "div",
-                  { className: "min-w-0 flex-1" },
-                  h("input", {
-                    value: selectedMemo.title,
-                    onChange: (event) => updateSelected({ title: event.target.value }),
-                    className: "w-full bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground md:text-3xl",
-                    placeholder: "Untitled memo"
-                  }),
-                  h(
-                    "div",
-                    { className: "mt-3 flex flex-wrap items-center gap-2 text-xs" },
-                    h("span", { className: "text-muted-foreground rounded-full border px-2 py-1" }, `Created ${formatDate(selectedMemo.createdAt)}`),
-                    h("span", { className: "text-muted-foreground rounded-full border px-2 py-1" }, `Updated ${formatDate(selectedMemo.updatedAt)}`),
-                    h("span", { className: "text-muted-foreground rounded-full border px-2 py-1" }, `${selectedWords} words`),
-                    h("span", { className: "text-muted-foreground rounded-full border px-2 py-1" }, `${selectedLines} lines`)
-                  )
-                ),
+        "div",
+        { className: "min-h-0 flex-1 overflow-y-auto px-2 py-2" },
+        !loaded
+          ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, "Loading memos...")
+          : filteredMemos.length === 0
+            ? h("div", { className: "px-3 py-4 text-sm text-muted-foreground" }, query ? "No matching memos." : "No memos yet.")
+            : filteredMemos.map((memo) =>
                 h(
                   "button",
                   {
+                    key: memo.id,
                     type: "button",
-                    onClick: deleteSelected,
-                    className: "text-muted-foreground hover:text-destructive hover:bg-destructive/10 inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors",
-                    title: "Delete memo",
-                    "aria-label": "Delete memo"
+                    onClick: () => setSelectedId(memo.id),
+                    className: cx(
+                      "mb-1 w-full rounded-md px-3 py-2.5 text-left transition-colors",
+                      memo.id === selectedId ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                    )
                   },
-                  h(TrashIcon)
-                )
-              ),
-              h(
-                "div",
-                { className: "min-h-0 flex-1 overflow-hidden p-4 md:p-6" },
-                h(
-                  "div",
-                  { className: "mx-auto flex h-full max-w-4xl flex-col overflow-hidden rounded-lg border bg-background shadow-sm" },
-                  h("textarea", {
-                    value: selectedMemo.content,
-                    onChange: (event) => updateSelected({ content: event.target.value }),
-                    placeholder: "Write notes, thesis updates, review reminders, or account tasks...",
-                    className: "placeholder:text-muted-foreground min-h-0 flex-1 resize-none bg-transparent p-4 text-sm leading-7 outline-none md:p-5"
-                  }),
-                  h(
-                    "div",
-                    { className: "text-muted-foreground flex h-10 shrink-0 items-center justify-between border-t px-4 text-xs" },
-                    h("span", null, `${selectedMemo.content.length} characters`),
-                    h("span", null, saveState === "local" ? "Local fallback" : "Scoped storage")
-                  )
+                  h("div", { className: "truncate text-sm font-medium" }, displayTitle(memo)),
+                  h("div", { className: "mt-1 line-clamp-2 text-xs leading-5" }, getPreview(memo)),
+                  h("div", { className: "mt-2 text-xs text-muted-foreground" }, formatDate(memo.updatedAt))
                 )
               )
-            )
       )
-    )
+    ),
+    h(
+      "main",
+      { className: "relative min-h-0 overflow-hidden bg-background" },
+      !selectedMemo
+        ? h(EmptyState, { onCreate: createNewMemo })
+        : h(
+            "div",
+            { className: "relative flex h-full min-h-0 flex-col" },
+            h(
+              "div",
+              { className: "absolute right-4 top-4 z-10 flex items-center gap-2 md:right-6" },
+              h(StatusPill, { saveState, loaded }),
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: deleteSelected,
+                  className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",
+                  title: "Delete memo",
+                  "aria-label": "Delete memo"
+                },
+                h(TrashIcon)
+              ),
+              h(
+                "button",
+                {
+                  type: "button",
+                  className: "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                  title: "More",
+                  "aria-label": "More"
+                },
+                h(DotsIcon)
+              )
+            ),
+            h(
+              "div",
+              { className: "mx-auto flex h-full w-full max-w-3xl flex-col px-6 pb-24 pt-20 md:px-10 md:pt-24" },
+              h("input", {
+                value: selectedMemo.title,
+                onChange: (event) => updateSelected({ title: event.target.value }),
+                placeholder: "Untitled memo",
+                className: "w-full bg-transparent text-3xl font-semibold leading-tight tracking-normal outline-none placeholder:text-muted-foreground md:text-4xl"
+              }),
+              h("textarea", {
+                value: selectedMemo.content,
+                onChange: (event) => updateSelected({ content: event.target.value }),
+                placeholder: "Write notes, thesis updates, review reminders, or account tasks...",
+                className: "mt-5 min-h-0 flex-1 resize-none bg-transparent text-base leading-8 outline-none placeholder:text-muted-foreground md:text-lg"
+              }),
+              h(
+                "div",
+                { className: "mt-4 flex items-center gap-3 text-xs text-muted-foreground" },
+                h("span", null, `${selectedWords} words`),
+                h("span", null, `Updated ${formatDate(selectedMemo.updatedAt)}`)
+              )
+            ),
+            h(
+              "div",
+              { className: "absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-muted/90 px-2 py-1.5 text-sm text-muted-foreground shadow-lg backdrop-blur" },
+              h("button", { type: "button", className: "rounded px-2 py-1 font-medium hover:bg-background hover:text-foreground", title: "Heading" }, "H"),
+              h("button", { type: "button", className: "rounded px-2 py-1 font-semibold hover:bg-background hover:text-foreground", title: "Bold" }, "B"),
+              h("button", { type: "button", className: "rounded px-2 py-1 italic hover:bg-background hover:text-foreground", title: "Italic" }, "I"),
+              h("span", { className: "mx-1 h-4 w-px bg-border" }),
+              h("button", { type: "button", className: "rounded px-2 py-1 hover:bg-background hover:text-foreground", title: "Link" }, "Link"),
+              h("button", { type: "button", className: "rounded px-2 py-1 hover:bg-background hover:text-foreground", title: "More" }, h(DotsIcon))
+            )
+          )
+      )
   );
 }
 

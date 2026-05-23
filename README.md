@@ -5,8 +5,8 @@ A Wealthfolio-style memo workspace for private investment notes.
 ## Features
 
 - Adds a `Memo` entry to Wealthfolio's add-on navigation.
-- Left note list with search and new-note action.
-- Full-page editor with title, body, timestamps, autosave status, and delete action.
+- Left memo selector with search and new-note action.
+- Clean two-pane editor with a focused writing canvas, autosave status, and delete action.
 - Persists notes through Wealthfolio add-on scoped secrets, with browser `localStorage` as fallback.
 
 ## Install
@@ -14,7 +14,7 @@ A Wealthfolio-style memo workspace for private investment notes.
 Package the add-on as a ZIP with `manifest.json`, `dist/addon.js`, and `README.md` at the ZIP root:
 
 ```bash
-zip -r wealthfolio-memo-addon-0.2.0.zip manifest.json dist README.md
+zip -r wealthfolio-memo-addon-0.3.0.zip manifest.json dist README.md
 ```
 
 Install the ZIP from Wealthfolio's Add-ons settings page, then enable `Memo`.
